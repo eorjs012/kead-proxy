@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-    // CORS 허용
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -9,13 +8,24 @@ export default async function handler(req, res) {
     }
 
     try {
+        //  body 직접 받기
+        let body = req.body;
+
+        // body가 비어있으면 raw로 읽기
+        if (!body || Object.keys(body).length === 0) {
+            const buffers = [];
+            for await (const chunk of req) {
+                buffers.push(chunk);
+            }
+            body = JSON.parse(Buffer.concat(buffers).toString());
+        }
+
         const response = await fetch("http://121.161.240.244:58081/api/v1/screen/stream-analysis", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
-                // 인증 제거
             },
-            body: JSON.stringify(req.body)
+            body: JSON.stringify(body)
         });
 
         const data = await response.text();
