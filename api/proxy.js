@@ -4,7 +4,7 @@ export default async function handler(req, res) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
-                // 🔥 Authorization 제거
+                // Authorization 제거
             },
             body: JSON.stringify(req.body)
         });
