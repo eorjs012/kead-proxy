@@ -16,7 +16,7 @@ export default async function handler(req, res) {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + API_KEY
             },
-            body: JSON.stringify(req.body)  // 🔥 핵심 수정
+            body: JSON.stringify(req.body) 
         });
 
         const data = await response.text();
