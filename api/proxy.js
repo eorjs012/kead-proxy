@@ -17,7 +17,7 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 serial_key: "SK-S5FYY-G38M1-J8DW1",
                 client_version: "1.0.0",
-                os_type: "windows",
+                os_type: "Windows",
                 os_build: "10",
                 architecture: "x64"
             })
