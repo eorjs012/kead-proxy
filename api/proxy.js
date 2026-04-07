@@ -8,10 +8,9 @@ export default async function handler(req, res) {
     }
 
     try {
-        //  body 직접 받기
         let body = req.body;
 
-        // body가 비어있으면 raw로 읽기
+        // body 비어있을 때 처리
         if (!body || Object.keys(body).length === 0) {
             const buffers = [];
             for await (const chunk of req) {
@@ -20,10 +19,15 @@ export default async function handler(req, res) {
             body = JSON.parse(Buffer.concat(buffers).toString());
         }
 
+        
+        const API_KEY = "SK-97Q26-U7KZZ-G85CY";
+
         const response = await fetch("http://121.161.240.244:58081/api/v1/screen/stream-analysis", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                
+                "Authorization": "Bearer " + API_KEY
             },
             body: JSON.stringify(body)
         });
