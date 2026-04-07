@@ -8,12 +8,6 @@ export default async function handler(req, res) {
     }
 
     try {
-        
-        let rawBody = '';
-        for await (const chunk of req) {
-            rawBody += chunk;
-        }
-
         const API_KEY = "SK-97Q26-U7KZZ-G85CY";
 
         const response = await fetch("http://121.161.240.244:58081/api/v1/screen/stream-analysis", {
@@ -22,7 +16,7 @@ export default async function handler(req, res) {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + API_KEY
             },
-            body: rawBody 
+            body: JSON.stringify(req.body)  // 🔥 핵심 수정
         });
 
         const data = await response.text();
