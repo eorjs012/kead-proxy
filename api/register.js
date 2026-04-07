@@ -13,7 +13,13 @@ export default async function handler(req, res) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(req.body)
+            body: JSON.stringify({
+                serial_key: "SK-S5FYY-G38M1-J8DW1",
+                client_version: "1.0.0",
+                os_type: "windows",
+                os_build: "10",
+                architecture: "x64"
+            })
         });
 
         const data = await response.text();
