@@ -23,12 +23,12 @@ export default async function handler(req, res) {
             })
         });
 
-        const registerData = await registerRes.json();
-        const accessToken = registerData.access_token;
+     const registerData = await registerRes.json();
+     const accessToken = registerData.api_token || registerData.access_token;
 
-        if (!accessToken) {
-            return res.status(500).json({ error: "토큰 발급 실패", registerData });
-        }
+     if (!accessToken) {
+          return res.status(500).json({ error: "토큰 없음", registerData });
+     }
 
         
         const analysisRes = await fetch("http://121.161.240.244:58081/api/v1/screen/stream-analysis", {
