@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const serialKey = process.env.READVOICE_SERIAL_KEY;
+  const serialKey = "SK-YG64Z-CKVKX-7RAFA";
 
   if (!serialKey) {
     return res.status(500).json({
