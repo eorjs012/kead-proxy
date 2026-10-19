@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
             image,
             mode = "summarize",
             language = "ko-kr",
-            provider = "default",
+            provider = "local",
             do_use_omniparser = false
         } = req.body || {};
 
@@ -46,7 +46,13 @@ module.exports = async function handler(req, res) {
             do_use_omniparser
         });
 
+        console.log("[Vercel] 작업 접수:", {
+            task_id: task.task_id,
+            status: task.status
+        });
+
         return res.status(202).json(task);
+
     } catch (error) {
         console.error("V2 inference error:", error);
 
