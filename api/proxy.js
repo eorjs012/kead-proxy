@@ -1,13 +1,14 @@
 
 const API_BASE = "https://api.readvoice.naraai.net";
 
-async function getApiToken() {
-  const serialKey = process.env.READVOICE_SERIAL_KEY;
+const SERIAL_KEY = "SK-YG64Z-CKVKX-7RAFA";
 
-  if (!serialKey) {
-    throw new Error(
-      "READVOICE_SERIAL_KEY 환경 변수가 설정되지 않았습니다."
-    );
+// API 토큰 발급
+async function getApiToken() {
+  const serialKey = SERIAL_KEY;
+
+  if (!serialKey || serialKey === "YOUR_SERIAL_KEY_HERE") {
+    throw new Error("시리얼 키를 코드에 입력해주세요.");
   }
 
   const registerResponse = await fetch(
@@ -56,6 +57,7 @@ async function getApiToken() {
   return token;
 }
 
+// Vercel API Handler
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -81,12 +83,14 @@ export default async function handler(req, res) {
   try {
     const { image, mode } = req.body || {};
 
+    // 이미지 확인
     if (typeof image !== "string" || !image.trim()) {
       return res.status(400).json({
         error: "image 필드에 Base64 이미지가 필요합니다."
       });
     }
 
+    // 분석 모드 확인
     const allowedModes = ["read-main", "summarize"];
 
     if (!allowedModes.includes(mode)) {
@@ -95,8 +99,10 @@ export default async function handler(req, res) {
       });
     }
 
+    // 토큰 발급
     const token = await getApiToken();
 
+    // 신규 v2 분석 API 요청
     const response = await fetch(
       `${API_BASE}/v2/inference`,
       {
@@ -115,19 +121,20 @@ export default async function handler(req, res) {
       }
     );
 
-    const text = await response.text();
+    const responseText = await response.text();
 
     let data;
 
     try {
-      data = JSON.parse(text);
+      data = JSON.parse(responseText);
     } catch {
       return res.status(502).json({
         error: "분석 API가 JSON이 아닌 응답을 반환했습니다.",
-        detail: text.slice(0, 1000)
+        detail: responseText.slice(0, 1000)
       });
     }
 
+    // 분석 요청 실패
     if (!response.ok) {
       return res.status(response.status).json({
         error: "분석 작업 접수에 실패했습니다.",
@@ -135,6 +142,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // 작업 ID 확인
     if (!data.task_id) {
       return res.status(502).json({
         error: "분석 API 응답에 task_id가 없습니다.",
@@ -142,10 +150,12 @@ export default async function handler(req, res) {
       });
     }
 
+    // 작업 ID 반환
     return res.status(202).json({
       task_id: data.task_id,
       status: data.status || "PENDING"
     });
+
   } catch (error) {
     console.error("ReadVoice proxy error:", error);
 
