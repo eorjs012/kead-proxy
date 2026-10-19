@@ -1,5 +1,8 @@
 
-const { getInferenceTask } = require("../../lib/readvoice.js");
+const {
+    getApiToken,
+    getInferenceTask
+} = require("../../lib/readvoice.js");
 
 module.exports = async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -26,19 +29,22 @@ module.exports = async function handler(req, res) {
             });
         }
 
-        console.log("[Vercel] 작업 조회 요청:", {
-            task_id: taskId
-        });
-
-        const task = await getInferenceTask(taskId);
+        const token = await getApiToken();
+        const task = await getInferenceTask(taskId, token);
 
         return res.status(200).json(task);
-
     } catch (error) {
-        console.error("V2 task query error:", error);
+        console.error("[Task test] failed:", {
+            message: error.message,
+            statusCode: error.statusCode || null,
+            apiCode: error.apiCode || null,
+            requestId: error.requestId || null
+        });
 
-        return res.status(502).json({
-            error: error.message || "작업 조회에 실패했습니다."
+        return res.status(error.statusCode === 404 ? 404 : 502).json({
+            error: error.message,
+            code: error.apiCode || null,
+            request_id: error.requestId || null
         });
     }
 };
