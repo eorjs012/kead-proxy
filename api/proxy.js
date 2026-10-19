@@ -1,132 +1,49 @@
 
-const API_BASE = "https://api.readvoice.naraai.net";
-const SERIAL_KEY = "SK-YG64Z-CKVKX-7RAFA";
+import { createInference } from "../lib/readvoice.js";
 
-async function getApiToken() {
-  if (!SERIAL_KEY) {
-   throw new Error("시리얼 키가 없습니다.");
-  }
-
-  const response = await fetch(`${API_BASE}/v1/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      serial_key: SERIAL_KEY,
-      client_version: "1.0.0",
-      os_type: "Windows",
-      os_build: "10",
-      architecture: "x64"
-    })
-  });
-
-  const text = await response.text();
-  let data;
-
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error(`토큰 응답이 JSON이 아닙니다: ${text.slice(0, 300)}`);
-  }
-
-  if (!response.ok) {
-    throw new Error(`토큰 발급 실패 (${response.status}): ${text}`);
-  }
-
-  const token = data.api_token || data.access_token;
-  if (!token) throw new Error("API 토큰이 없습니다.");
-
-  return token;
-}
+const ALLOWED_ORIGIN = "*";
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Cache-Control", "no-store");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
 
-  if (req.method === "OPTIONS") return res.status(204).end();
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "POST만 허용됩니다." });
+    return res.status(405).json({
+      error: "Method not allowed",
+    });
   }
 
   try {
     const {
       image,
-      mode,
+      mode = "summarize",
       language = "ko-kr",
       provider = "default",
-      do_use_omniparser = false
+      do_use_omniparser = false,
     } = req.body || {};
 
-    if (typeof image !== "string" || !image.trim()) {
-      return res.status(400).json({ error: "Base64 이미지가 필요합니다." });
-    }
-
-    if (!["read-main", "summarize"].includes(mode)) {
-      return res.status(400).json({
-        error: "mode는 read-main 또는 summarize여야 합니다."
-      });
-    }
-
-    const token = await getApiToken();
-
-    const response = await fetch(`${API_BASE}/v2/inference`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        image,
-        mode,
-        language,
-        provider,
-        do_use_omniparser
-      })
+    const task = await createInference({
+      image,
+      mode,
+      language,
+      provider,
+      do_use_omniparser,
     });
 
-    const text = await response.text();
-    let data;
-
-    try {
-      data = JSON.parse(text);
-    } catch {
-      return res.status(502).json({
-        error: "분석 API 응답이 JSON이 아닙니다.",
-        detail: text.slice(0, 500)
-      });
-    }
-
-    if (!response.ok) {
-      return res.status(response.status).json({
-        error: "분석 작업 접수에 실패했습니다.",
-        detail: data
-      });
-    }
-
-    if (!data.task_id) {
-      return res.status(502).json({
-        error: "분석 응답에 task_id가 없습니다.",
-        detail: data
-      });
-    }
-
-    console.log("ReadVoice task created:", {
-      task_id: data.task_id,
-      status: data.status
-    });
-
-   return res.status(202).json({
-  task_id: data.task_id,
-  status: data.status || "PENDING",
-  session: sealToken(token)
-});
+    return res.status(202).json(task);
   } catch (error) {
-    console.error("ReadVoice proxy error:", error);
+    console.error("V2 inference error:", error);
 
     return res.status(502).json({
-      error: "나라리드보이스 API 요청에 실패했습니다.",
-      detail: error.message
+      error: error.message || "V2 분석 요청에 실패했습니다.",
     });
   }
 }
