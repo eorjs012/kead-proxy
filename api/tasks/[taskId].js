@@ -22,13 +22,18 @@ module.exports = async function handler(req, res) {
 
         if (!taskId || typeof taskId !== "string") {
             return res.status(400).json({
-                error: "task_id가 없습니다."
+                error: "task_id가 없거나 올바르지 않습니다."
             });
         }
+
+        console.log("[Vercel] 작업 조회 요청:", {
+            task_id: taskId
+        });
 
         const task = await getInferenceTask(taskId);
 
         return res.status(200).json(task);
+
     } catch (error) {
         console.error("V2 task query error:", error);
 
