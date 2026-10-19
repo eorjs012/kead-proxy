@@ -1,4 +1,3 @@
-// api/proxy.js
 
 const API_BASE = "https://api.readvoice.naraai.net";
 
@@ -6,38 +5,52 @@ async function getApiToken() {
   const serialKey = process.env.READVOICE_SERIAL_KEY;
 
   if (!serialKey) {
-    throw new Error("READVOICE_SERIAL_KEY 환경 변수가 설정되지 않았습니다.");
+    throw new Error(
+      "READVOICE_SERIAL_KEY 환경 변수가 설정되지 않았습니다."
+    );
   }
 
-  const response = await fetch(`${API_BASE}/v1/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      serial_key: serialKey,
-      client_version: "1.0.0",
-      os_type: "Windows",
-      os_build: "10",
-      architecture: "x64"
-    })
-  });
+  const registerResponse = await fetch(
+    `${API_BASE}/v1/auth/register`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        serial_key: serialKey,
+        client_version: "1.0.0",
+        os_type: "Windows",
+        os_build: "10",
+        architecture: "x64"
+      })
+    }
+  );
 
-  const text = await response.text();
+  const text = await registerResponse.text();
 
-  if (!response.ok) {
-    throw new Error(`토큰 발급 실패 (${response.status}): ${text}`);
+  if (!registerResponse.ok) {
+    throw new Error(
+      `토큰 발급 실패 (${registerResponse.status}): ${text}`
+    );
   }
 
   let data;
+
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error("토큰 발급 응답을 JSON으로 해석할 수 없습니다.");
+    throw new Error(
+      "토큰 발급 응답을 JSON으로 해석할 수 없습니다."
+    );
   }
 
   const token = data.api_token || data.access_token;
 
   if (!token) {
-    throw new Error("등록 응답에 api_token 또는 access_token이 없습니다.");
+    throw new Error(
+      "등록 응답에 api_token 또는 access_token이 없습니다."
+    );
   }
 
   return token;
@@ -45,8 +58,14 @@ async function getApiToken() {
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "POST, OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type"
+  );
   res.setHeader("Cache-Control", "no-store");
 
   if (req.method === "OPTIONS") {
@@ -54,7 +73,9 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "POST만 허용됩니다." });
+    return res.status(405).json({
+      error: "POST만 허용됩니다."
+    });
   }
 
   try {
@@ -76,24 +97,28 @@ export default async function handler(req, res) {
 
     const token = await getApiToken();
 
-    const response = await fetch(`${API_BASE}/v2/inference`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        image,
-        mode,
-        language: "ko-kr",
-        provider: "default",
-        do_use_omniparser: false
-      })
-    });
+    const response = await fetch(
+      `${API_BASE}/v2/inference`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          image,
+          mode,
+          language: "ko-kr",
+          provider: "default",
+          do_use_omniparser: false
+        })
+      }
+    );
 
     const text = await response.text();
 
     let data;
+
     try {
       data = JSON.parse(text);
     } catch {
