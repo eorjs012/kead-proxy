@@ -116,10 +116,11 @@ export default async function handler(req, res) {
       status: data.status
     });
 
-    return res.status(202).json({
-      task_id: data.task_id,
-      status: data.status || "PENDING"
-    });
+   return res.status(202).json({
+  task_id: data.task_id,
+  status: data.status || "PENDING",
+  session: sealToken(token)
+});
   } catch (error) {
     console.error("ReadVoice proxy error:", error);
 
