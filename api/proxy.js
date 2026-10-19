@@ -1,5 +1,5 @@
 
-const { createInference } = require("../lib/readvoice.js");
+const { runInference } = require("../lib/readvoice.js");
 
 module.exports = async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -34,30 +34,47 @@ module.exports = async function handler(req, res) {
 
         if (!["read-main", "summarize"].includes(mode)) {
             return res.status(400).json({
-                error: "지원하지 않는 분석 모드입니다."
+                error: "mode는 read-main 또는 summarize여야 합니다."
             });
         }
 
-        const task = await createInference({
+        console.log("[Vercel] 분석 시작:", {
+            mode,
+            language,
+            provider,
+            imageLength: image.length
+        });
+
+        const result = await runInference({
             image,
             mode,
             language,
             provider,
-            do_use_omniparser
+            do_use_omniparser,
+            timeoutMs: 45000
         });
 
-        console.log("[Vercel] 작업 접수:", {
-            task_id: task.task_id,
-            status: task.status
+        console.log("[Vercel] 분석 완료:", {
+            task_id: result.task_id,
+            status: result.status
         });
 
-        return res.status(202).json(task);
-
+        return res.status(200).json(result);
     } catch (error) {
-        console.error("V2 inference error:", error);
+        console.error("[Vercel] 분석 오류:", {
+            message: error.message,
+            statusCode: error.statusCode || null,
+            apiCode: error.apiCode || null,
+            requestId: error.requestId || null
+        });
 
-        return res.status(502).json({
-            error: error.message || "V2 분석 요청에 실패했습니다."
+        const statusCode =
+            error.statusCode === 504 ? 504 : 502;
+
+        return res.status(statusCode).json({
+            error: error.message || "분석 요청에 실패했습니다.",
+            code: error.apiCode || null,
+            request_id: error.requestId || null
         });
     }
 };
