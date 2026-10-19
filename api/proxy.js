@@ -1,10 +1,10 @@
 
 const API_BASE = "https://api.readvoice.naraai.net";
-const SERIAL_KEY = process.env.READVOICE_SERIAL_KEY;
+const SERIAL_KEY = "SK-YG64Z-CKVKX-7RAFA";
 
 async function getApiToken() {
   if (!SERIAL_KEY) {
-    throw new Error("READVOICE_SERIAL_KEY 환경변수가 없습니다.");
+   throw new Error("시리얼 키가 없습니다.");
   }
 
   const response = await fetch(`${API_BASE}/v1/auth/register`, {
